@@ -54,7 +54,7 @@ following table compares the two tiers:
 | Survives loss of the database | No | Yes |
 | Requires wal_level = logical | No | Yes |
 | Requires REPLICA IDENTITY FULL | No | Yes |
-| Recovers a TRUNCATE | Yes, in capture mode | No |
+| Recovers a TRUNCATE | Yes, by default | No |
 | Installs with no superuser | Yes | Yes |
 
 The trigger tier is the everyday undo. The companion is the durable

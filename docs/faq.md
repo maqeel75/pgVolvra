@@ -191,4 +191,4 @@ For more information, visit
 [docs.pgedge.com](https://docs.pgedge.com).
 
 To report an issue with the software, visit
-[the issues page](https://github.com/pgEdge/pgVolvra/issues).
+[the issues page](https://github.com/pgEdge/pgvolvra/issues).

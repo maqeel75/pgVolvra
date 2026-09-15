@@ -1,4 +1,4 @@
-module github.com/pgedge/pgVolvra/companion
+module github.com/pgedge/pgvolvra/companion
 
 go 1.25.0
 

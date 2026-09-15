@@ -63,16 +63,25 @@ in `LICENSE.md` and `docs/LICENSE.md`, the `repo_url` and copyright in
 `mkdocs.yml`, the CI badge and issue links in `README.md` and the docs,
 and the Go module paths under `github.com/pgedge/`.
 
-The repository currently sits at `github.com/maqeel75/pgVolvra` and is
+The repository currently sits at `github.com/maqeel75/pgvolvra` and is
 intended to move to the pgEdge organisation. Rewriting the references
 to a personal account and back again would churn the history and the
 Go module path for no gain.
 
-**Amended 2026-09-12.** The repository is named `pgVolvra`, matching
-the product name, and the Go module paths follow it:
-`github.com/pgedge/pgVolvra/cli` and `.../companion`. A module path
-must match the repository that serves it, so this one is not a free
-choice the way the schema name was.
+**Amended 2026-09-14.** The repository is named `pgvolvra`, all
+lowercase, and the Go module paths follow it:
+`github.com/pgedge/pgvolvra/cli` and `.../companion`. The product is
+still written **pgVolvra** everywhere a person reads it.
+
+Lowercase for two reasons. Go module paths are case-sensitive, and the
+module proxy escapes every capital as `!` plus the lowercase letter, so
+`pgVolvra` would appear as `pg!volvra` in proxy URLs and in every
+user's module cache. And it is what the ecosystem does: pgBouncer ships
+from `pgbouncer/pgbouncer`, pgBackRest from `pgbackrest/pgbackrest`.
+The capitalised name is the product; the repository is lowercase.
+
+Changed while it was still free - no tags, and the module had never
+been published, so no import path existed anywhere.
 
 The known cost until the transfer: the CI badge does not render and the
 issue links resolve to the wrong place. That is accepted deliberately.

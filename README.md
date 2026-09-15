@@ -1,6 +1,6 @@
 # pgVolvra
 
-[![test](https://github.com/pgEdge/pgVolvra/actions/workflows/test.yml/badge.svg)](https://github.com/pgEdge/pgVolvra/actions/workflows/test.yml)
+Verified on PostgreSQL 14, 15, 16, 17, 18, and 19 before every release.
 
 Row-level undo and history for PostgreSQL.
 
@@ -51,6 +51,72 @@ been verified on which service.
 pgVolvra records changes from the moment you cover a table, and cannot
 recover a change made before that point. Setup is therefore the whole
 job.
+
+## How pgVolvra Works
+
+pgVolvra has two independent capture tiers. You can run either one on
+its own, or both together. The following diagram shows where each one
+sits:
+
+```mermaid
+flowchart LR
+    App["Your application"]
+    Tables[("Your covered tables")]
+
+    App -- "INSERT<br/>UPDATE<br/>DELETE" --> Tables
+
+    subgraph T ["Trigger tier (inside your database)"]
+        Log[("volvra.change_log")]
+    end
+
+    subgraph C ["Companion tier (in storage you own)"]
+        direction LR
+        Companion["volvra-companion"]
+        Archive[("JSON archive")]
+        Companion --> Archive
+    end
+
+    Tables -- "row triggers" --> Log
+    Log -- "undo()<br/>replay()" --> Tables
+    Tables -- "logical<br/>replication" --> Companion
+```
+
+The trigger tier is the everyday undo, and it lives entirely inside
+your database. Row triggers write the row image before the change and
+the row image after it into `volvra.change_log`, in the same
+transaction as your write. Nothing runs outside the database, so this
+tier works anywhere PostgreSQL runs, including managed providers that
+allow no extensions.
+
+The companion tier is the durable copy, and it lives outside your
+database. A small process reads changes through logical replication and
+writes them to storage you own, as newline-delimited JSON with a
+manifest chaining SHA-256 hashes. You can read that archive without
+pgVolvra and without PostgreSQL, so the history survives the loss of
+the database.
+
+Neither tier needs the other. They observe the same tables and write to
+different places. The following table compares them:
+
+| Property | Trigger tier | Companion tier |
+|---|---|---|
+| What it gives you | Everyday undo and history | History that outlives the database |
+| How it captures | Row triggers on your tables | An external process reading logical replication |
+| Where history is kept | A table in the same database | Files in storage you own |
+| When it is written | Synchronously, in your transaction | Asynchronously, shortly after |
+| Survives loss of the database | No | Yes |
+| Requires wal_level = logical | No | Yes |
+| Requires REPLICA IDENTITY FULL | No | Yes |
+| Recovers a TRUNCATE | Yes, by default | No |
+| Needs a superuser | No | No |
+| Runs on managed providers | Yes | Yes, given a REPLICATION grant |
+
+Most deployments use the trigger tier alone. Add the companion when the
+history must survive the database itself. The one place the two meet is
+recovery: after restoring a backup, the archive can refill
+`volvra.change_log`, and undo and replay then work as they always did.
+The [Architecture](docs/architecture.md) document explains both in
+detail.
 
 ## Installation
 
@@ -152,7 +218,7 @@ For more information, visit
 [docs.pgedge.com](https://docs.pgedge.com).
 
 To report an issue with the software, visit
-[the issues page](https://github.com/pgEdge/pgVolvra/issues).
+[the issues page](https://github.com/pgEdge/pgvolvra/issues).
 
 ## Contributing
 

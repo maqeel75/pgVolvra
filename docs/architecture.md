@@ -19,7 +19,7 @@ following table describes what pgVolvra stores for each operation:
 | INSERT | The new row image. |
 | UPDATE | The old and new values of the columns that changed. |
 | DELETE | The complete old row image. |
-| TRUNCATE | One delete image per row, in capture mode. |
+| TRUNCATE | One delete image per row, when `on_truncate` is `capture` (the default). |
 
 pgVolvra stores row images as `jsonb`. An UPDATE stores only the columns
 whose values differ, because the primary key travels in its own column
