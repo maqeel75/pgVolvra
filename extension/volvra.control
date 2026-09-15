@@ -6,10 +6,13 @@
 # what managed providers do not give you, and exactly why volvra's core is
 # plain SQL in the first place.
 comment = 'Row-level undo and history for PostgreSQL'
-# Nothing has been released, so this stays at 0.1.0.  It is the *product*
-# version and is deliberately NOT coupled to volvra.schema_version, which is an
-# internal migration counter -- see DECISIONS.md.
-default_version = '0.1.0'
+# The *product* version, deliberately NOT coupled to volvra.schema_version,
+# which is an internal migration counter -- see DECISIONS.md.
+#
+# 1.0.0-beta1 is the first public release.  Under semantic versioning it sorts
+# below 1.0.0, which is the GA it leads to.  Releasing as 1.x is a commitment:
+# after GA, a breaking change to the public functions needs a major bump.
+default_version = '1.0.0-beta1'
 relocatable = false
 superuser = false
 trusted = false

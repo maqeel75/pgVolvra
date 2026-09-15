@@ -1,12 +1,12 @@
 -- =====================================================================
--- pgVolvra 0.1.0 -- FROZEN RELEASE SNAPSHOT. Do not edit.
+-- pgVolvra 1.0.0-beta1 -- FROZEN RELEASE SNAPSHOT. Do not edit.
 --
 -- Captured from sql/volvra.sql by tools/snapshot-schema.sh at release
 -- time. Its only purpose is to let a later release prove that
--- upgrading from 0.1.0 preserves history and leaves a working
+-- upgrading from 1.0.0-beta1 preserves history and leaves a working
 -- engine behind. Editing it makes that proof a fiction.
 --
--- If 0.1.0 had a bug, the fixture keeps the bug. That is correct:
+-- If 1.0.0-beta1 had a bug, the fixture keeps the bug. That is correct:
 -- the databases being upgraded have it too.
 -- =====================================================================
 -- =====================================================================
@@ -4539,9 +4539,10 @@ $partition_grants$;
 --
 -- The number is called out as INTERNAL deliberately: volvra.schema_version is
 -- a migration counter, not a release number.  The release number lives in
--- extension/volvra.control and is 0.1.0.  Reading "schema v6" as a sixth
--- release is the obvious mistake, so the wording forecloses it.  The ledger
--- itself stays queryable: SELECT * FROM volvra.schema_version.
+-- extension/volvra.control and is deliberately not repeated here; a version
+-- written in two places goes stale in one of them.  Reading "schema v6" as a
+-- sixth release is the obvious mistake, so the wording forecloses it.  The
+-- ledger itself stays queryable: SELECT * FROM volvra.schema_version.
 SELECT format('volvra installed: internal schema version %s%s',
               volvra.version(),
               CASE WHEN v_new > 0

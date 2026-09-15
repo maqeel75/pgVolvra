@@ -54,7 +54,8 @@ left off, and never reshapes what an existing version already holds.
 The install applies only the migrations a database is missing, which is
 what makes reinstalling the current script over live history safe.
 
-pgVolvra 0.1.0 is the first release, so it ships one schema version. The
+pgVolvra 1.0.0-beta1 is the first release, so it ships one schema
+version. The
 blocks that repaired databases created during pgVolvra's development
 were removed at that release; they existed only because development
 changed the shape of the history table several times without releasing

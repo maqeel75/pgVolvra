@@ -189,8 +189,8 @@ and that is now in place:
   only to fix databases created during development, and they made the
   install script carry code that could never run again once anything
   was released. The engine is 78 lines shorter for it.
-- **`tools/snapshot-schema.sh` freezes a release as a fixture.**
-  `test/fixtures/volvra-0.1.0.sql` is the first. Reconstructing a
+- **`tools/snapshot-schema.sh` freezes a release as a snapshot.**
+  `test/releases/volvra-1.0.0-beta1.sql` is the first. Reconstructing a
   released schema later, from git or from memory, is guesswork exactly
   when accuracy matters, and the guess is unfalsifiable because the
   release it describes is gone. The tool refuses to overwrite an

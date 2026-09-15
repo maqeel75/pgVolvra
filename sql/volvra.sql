@@ -4528,9 +4528,10 @@ $partition_grants$;
 --
 -- The number is called out as INTERNAL deliberately: volvra.schema_version is
 -- a migration counter, not a release number.  The release number lives in
--- extension/volvra.control and is 0.1.0.  Reading "schema v6" as a sixth
--- release is the obvious mistake, so the wording forecloses it.  The ledger
--- itself stays queryable: SELECT * FROM volvra.schema_version.
+-- extension/volvra.control and is deliberately not repeated here; a version
+-- written in two places goes stale in one of them.  Reading "schema v6" as a
+-- sixth release is the obvious mistake, so the wording forecloses it.  The
+-- ledger itself stays queryable: SELECT * FROM volvra.schema_version.
 SELECT format('volvra installed: internal schema version %s%s',
               volvra.version(),
               CASE WHEN v_new > 0

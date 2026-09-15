@@ -236,7 +236,7 @@ The following steps make a release, in this order:
     `extension/upgrade-from.txt`, so the build emits an upgrade script
     from it.
 3. Run `./tools/snapshot-schema.sh`, which freezes the install script
-    as `test/fixtures/volvra-<version>.sql`. The next release's
+    as `test/releases/volvra-<version>.sql`. The next release's
     upgrade test uses the snapshot, and the tool refuses to overwrite
     one, because a released schema never changes.
 4. Run `make -C cli release` and `make -C companion release`, which

@@ -4,7 +4,9 @@ All notable changes to pgVolvra are documented in this file. The format
 follows [Keep a Changelog](https://keepachangelog.com/), and pgVolvra
 uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0-beta1] - 2026-09-15
+
+### Added
 
 - Support for multi-master clusters, through the `capture_replicated`
   setting and `volvra.set_capture_replicated`. PostgreSQL does not fire
@@ -17,9 +19,6 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A critical preflight finding when a pgVolvra table is in a publication
   or replication set, which would make two nodes write the same
   history identifiers.
-
-### Added
-
 - Row-level undo for INSERT, UPDATE, and DELETE, selectable by table,
   time window, transaction, actor, database role, or SQL predicate.
 - Transaction-scoped undo, so a mistaken migration can be reverted
@@ -88,7 +87,12 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Notes
 
+- This is a beta. The interfaces are expected to hold, but they may
+  still change before 1.0.0, and upgrading from this release will be
+  supported.
 - pgVolvra requires PostgreSQL 14 or later and no PostgreSQL extensions.
-- pgVolvra has not yet been validated against a live managed provider
-  instance.
+- Verified against live instances of Supabase, Neon, and pgEdge Cloud.
+  On pgEdge Cloud the durable tier additionally needs a REPLICATION
+  grant. Amazon RDS, Amazon Aurora, and Google Cloud SQL are designed
+  for on the same basis but have not yet been verified.
 - No release signing key is published yet.

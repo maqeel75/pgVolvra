@@ -251,19 +251,19 @@ for v in "${VERSIONS[@]}"; do
     # Upgrade path: the newest released schema, real history and a seal, then
     # the current schema installed over it twice.
     #
-    # The fixture is picked as the highest-versioned file in test/fixtures,
+    # The snapshot is picked as the highest-versioned file in test/releases,
     # rather than named here, so adding a release's snapshot is enough to make
     # this test cover it.
     echo "### upgrade ###"
-    FIXTURE="$(ls "$ROOT"/test/fixtures/volvra-*.sql 2>/dev/null \
+    SNAPSHOT="$(ls "$ROOT"/test/releases/volvra-*.sql 2>/dev/null \
                | sort -V | tail -1)"
-    if [[ -z "$FIXTURE" ]]; then
-      echo "no release fixture in test/fixtures -- run tools/snapshot-schema.sh"
+    if [[ -z "$SNAPSHOT" ]]; then
+      echo "no release snapshot in test/releases -- run tools/snapshot-schema.sh"
     else
-      echo "fixture: $(basename "$FIXTURE")"
+      echo "snapshot: $(basename "$SNAPSHOT")"
       su_psql -c "CREATE DATABASE volvra_upgrade"
       u() { docker exec "$cname" psql -v ON_ERROR_STOP=1 -U postgres -d volvra_upgrade "$@"; }
-      u -f "/volvra/test/fixtures/$(basename "$FIXTURE")"
+      u -f "/volvra/test/releases/$(basename "$SNAPSHOT")"
       u -f /volvra/test/upgrade-seed.sql
       u -f /volvra/sql/volvra.sql
       u -f /volvra/sql/volvra.sql

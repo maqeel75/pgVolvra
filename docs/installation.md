@@ -56,7 +56,7 @@ SELECT volvra.version();
 ```
 
 The number is the internal schema version, not a release number. There
-is one schema version today; the release number is 0.1.0.
+is one schema version today; the release number is 1.0.0-beta1.
 
 ## Installing from a SQL client or console
 

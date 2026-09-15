@@ -58,73 +58,6 @@ The final block is the thing to report. A verification that passes
 prints the server version, the role, and whether that role is a
 superuser.
 
-## Amazon Aurora PostgreSQL
-
-Aurora gives the master user the `rds_superuser` role, which is not a
-PostgreSQL superuser. That is the configuration pgVolvra is designed
-for, and it is why `volvra.preflight` should report no critical
-findings on Aurora: the critical findings concern a superuser-owned
-install, which Aurora cannot produce.
-
-If you need a cluster to verify against, `test/aurora-setup.md` in the
-repository builds a throwaway Aurora Serverless v2 cluster with the AWS
-command line, runs this verification, and deletes everything again.
-Those are maintainer notes rather than product documentation, and the
-teardown section is the important part: an Aurora cluster costs money
-for as long as it exists.
-
-Verify Aurora with the following steps.
-
-1. Create a throwaway database on the cluster, so the verification
-    cannot touch anything that matters:
-
-    ```sql
-    CREATE DATABASE volvra_probe;
-    ```
-
-2. Confirm the writer endpoint is reachable from where the script
-    runs. Aurora accepts connections only from within the VPC unless
-    the cluster is publicly accessible, so run the script from an EC2
-    instance in the same VPC, or through a bastion or VPN.
-
-3. Run the check against the **writer** endpoint. A reader endpoint
-    cannot create objects, and cannot create a replication slot:
-
-    ```bash
-    ./test/provider.sh \
-      --dsn "postgres://master@mycluster.cluster-abc.eu-west-1.rds.amazonaws.com:5432/volvra_probe?sslmode=require"
-    ```
-
-4. Read the section 9 output. The trigger tier does not need logical
-    replication, so a skip there is not a failure. Continue to the
-    next step only if you intend to run the companion.
-
-5. For the durable tier, set `rds.logical_replication` to 1 in the DB
-    **cluster** parameter group, not the instance parameter group. The
-    setting is static, so the writer instance needs a reboot before
-    the change takes effect.
-
-6. Grant the replication role to the user the companion connects as.
-    Aurora and RDS gate replication behind a role rather than the
-    `REPLICATION` attribute:
-
-    ```sql
-    GRANT rds_replication TO master;
-    ```
-
-7. Re-run the check. Section 9 should now report that a `pgoutput`
-    slot can be created, and `volvra.companion_setup` should report
-    `wal_level` as ready.
-
-An abandoned replication slot retains write-ahead log until the
-storage fills, and on Aurora that storage is the cluster volume. Run
-`volvra.companion_status` to see retained WAL against both thresholds,
-and drop any slot left behind by a verification:
-
-```sql
-SELECT pg_drop_replication_slot('volvra_companion');
-```
-
 ## Supabase
 
 Supabase is the cheapest verification to run, and it tests the same
@@ -325,15 +258,84 @@ twice. This is easy to do by accident with a replication set that adds
 every table in the database, so exclude the `volvra` schema
 explicitly.
 
-## What to record
+## Amazon Aurora PostgreSQL
+
+Aurora has not been verified yet. This section describes what to
+expect and how to run the check, not a result.
+
+Aurora gives the master user the `rds_superuser` role, which is not a
+PostgreSQL superuser. That is the configuration pgVolvra is designed
+for, and it is why `volvra.preflight` should report no critical
+findings on Aurora: the critical findings concern a superuser-owned
+install, which Aurora cannot produce.
+
+If you need a cluster to verify against, `test/aurora-setup.md` in the
+repository builds a throwaway Aurora Serverless v2 cluster with the AWS
+command line, runs this verification, and deletes everything again.
+Those are maintainer notes rather than product documentation, and the
+teardown section is the important part: an Aurora cluster costs money
+for as long as it exists.
+
+Verify Aurora with the following steps.
+
+1. Create a throwaway database on the cluster, so the verification
+    cannot touch anything that matters:
+
+    ```sql
+    CREATE DATABASE volvra_probe;
+    ```
+
+2. Confirm the writer endpoint is reachable from where the script
+    runs. Aurora accepts connections only from within the VPC unless
+    the cluster is publicly accessible, so run the script from an EC2
+    instance in the same VPC, or through a bastion or VPN.
+
+3. Run the check against the **writer** endpoint. A reader endpoint
+    cannot create objects, and cannot create a replication slot:
+
+    ```bash
+    ./test/provider.sh \
+      --dsn "postgres://master@mycluster.cluster-abc.eu-west-1.rds.amazonaws.com:5432/volvra_probe?sslmode=require"
+    ```
+
+4. Read the section 9 output. The trigger tier does not need logical
+    replication, so a skip there is not a failure. Continue to the
+    next step only if you intend to run the companion.
+
+5. For the durable tier, set `rds.logical_replication` to 1 in the DB
+    **cluster** parameter group, not the instance parameter group. The
+    setting is static, so the writer instance needs a reboot before
+    the change takes effect.
+
+6. Grant the replication role to the user the companion connects as.
+    Aurora and RDS gate replication behind a role rather than the
+    `REPLICATION` attribute:
+
+    ```sql
+    GRANT rds_replication TO master;
+    ```
+
+7. Re-run the check. Section 9 should now report that a `pgoutput`
+    slot can be created, and `volvra.companion_setup` should report
+    `wal_level` as ready.
+
+An abandoned replication slot retains write-ahead log until the
+storage fills, and on Aurora that storage is the cluster volume. Run
+`volvra.companion_status` to see retained WAL against both thresholds,
+and drop any slot left behind by a verification:
+
+```sql
+SELECT pg_drop_replication_slot('volvra_companion');
+```
+
+## Verification results
 
 Report a verification with the service, the engine version, the result
-block, and any check that failed. A verification is specific to a
-major version and a service, so Aurora PostgreSQL 16 passing says
-nothing about Aurora PostgreSQL 14.
+block, and any check that failed. A verification is specific to a major
+version and a service, so Aurora PostgreSQL 16 passing says nothing
+about Aurora PostgreSQL 14.
 
-The following table tracks what has been verified. Every row is
-unverified until someone runs the script and records the result:
+The following table records what has been verified so far:
 
 | Service | Engine version | Trigger tier | Durable tier | Verified |
 |---|---|---|---|---|
@@ -349,64 +351,75 @@ The durable tier column distinguishes two things, because
 means `wal_level` is logical, a `pgoutput` slot can be created, and
 `volvra.companion_setup` reports ready. "Passed end to end" means the
 companion was actually run against that service: it streamed changes
-into an archive, the archive verified, the in-database history was
-then purged entirely, the archive was restored over it, and an undo
-driven only by that restored history put the data back. That is the
-claim the durable tier exists to make, and only the second form
-establishes it.
+into an archive, the archive verified, the in-database history was then
+purged entirely, the archive was restored over it, and an undo driven
+only by that restored history put the data back. That is the claim the
+durable tier exists to make, and only the second form establishes it.
 
-Do not describe a service as supported before its row is filled in.
-For the services still marked "Not yet run", the documentation's claim
-rests on the design requiring nothing they withhold, which is a
-reasoned expectation rather than a tested fact.
+Together the three verified services cover PostgreSQL 16, 17, and 18 on
+three different platforms, which is more useful than three runs on one
+version.
 
-The Neon run passed all 22 trigger-tier checks on PostgreSQL 18.6,
-against `neondb_owner`, on the free plan. Roles created from SQL on
-Neon do not inherit `neon_superuser`, and the three pgVolvra roles
-worked correctly as ordinary roles.
+### Supabase
 
-The durable tier was then verified end to end on Neon, after enabling
-logical replication for the project. The companion created its slot,
-streamed three changes into an archive of one segment, and that
-archive verified with its chain intact. `volvra.purge` then removed
-every row of in-database history, the archive was restored over the
-empty history, and an undo driven entirely by the restored changes put
-both altered rows back to their original values. The history survived
-the loss of the database's own copy of it, which is the whole purpose
-of the durable tier and the first time it has been demonstrated
-against a managed service rather than a container.
-
-Two operational notes from that run. Use `--segment-bytes` smaller
-than the 64 MB default for a short test, because a segment reaches the
-manifest only when it rotates, and a clean shutdown is what rotates
-the last one. Drop the slot afterwards: on Neon a consumed slot keeps
-the compute awake and defeats scale to zero, and an unconsumed slot
-retains write-ahead log.
-
-Together the two verified services cover PostgreSQL 17 and 18 on two
-different platforms, which is the more useful pair than two runs on
-one version.
-
-The durable tier is verified end to end on Supabase as well. The
-companion streamed three changes into an archive of two segments, the
-archive verified, `volvra.purge` emptied the in-database history, the
-archive was restored over it, and an undo driven only by restored
-history put both altered rows back. Supabase needs no parameter change
-for this: `wal_level` is already `logical` for its realtime feature,
-and the `postgres` role may create its own slot.
-
-Drop the slot when a verification finishes. The free plan gives 500 MB
-of database storage in total, and an abandoned slot retains
-write-ahead log until it is dropped.
-
-The Supabase run passed all 24 checks with nothing skipped, on the
-free plan, against the `postgres` role that Supabase provides. Two
-results there were not predictable in advance and are the reason the
+The Supabase run passed all 24 checks with nothing skipped, on the free
+plan, against the `postgres` role that Supabase provides. Two results
+there were not predictable in advance and are the reason the
 verification exists: that role holds CREATEROLE, so the three
 cluster-wide pgVolvra roles can be created; and it may create its own
-`pgoutput` replication slot, so the durable tier works without a
-paid plan or a parameter change. Supabase runs `wal_level` as
-`logical` already, for its own realtime feature.
+`pgoutput` replication slot, so the durable tier works without a paid
+plan or a parameter change. Supabase runs `wal_level` as `logical`
+already, for its own realtime feature.
+
+The durable tier is verified end to end. The companion streamed three
+changes into an archive of two segments, the archive verified,
+`volvra.purge` emptied the in-database history, the archive was restored
+over it, and an undo driven only by restored history put both altered
+rows back.
+
+Drop the slot when a verification finishes. The free plan gives 500 MB
+of database storage in total, and an abandoned slot retains write-ahead
+log until it is dropped.
+
+### Neon
+
+The Neon run passed all 22 trigger-tier checks on PostgreSQL 18.6,
+against `neondb_owner`, on the free plan. Roles created from SQL on Neon
+do not inherit `neon_superuser`, and the three pgVolvra roles worked
+correctly as ordinary roles.
+
+The durable tier was then verified end to end, after enabling logical
+replication for the project. The companion created its slot, streamed
+three changes into an archive of one segment, and that archive verified
+with its chain intact. `volvra.purge` then removed every row of
+in-database history, the archive was restored over the empty history,
+and an undo driven entirely by the restored changes put both altered
+rows back to their original values. The history survived the loss of the
+database's own copy of it, which is the whole purpose of the durable
+tier.
+
+Two operational notes from that run. Use `--segment-bytes` smaller than
+the 64 MB default for a short test, because a segment reaches the
+manifest only when it rotates, and a clean shutdown is what rotates the
+last one. Drop the slot afterwards: on Neon a consumed slot keeps the
+compute awake and defeats scale to zero, and an unconsumed slot retains
+write-ahead log.
+
+### pgEdge Cloud
+
+The pgEdge Cloud run passed the trigger tier on PostgreSQL 16.15,
+installed as the `admin` role. It is the one verified service where the
+durable tier is not available by default: `wal_level` is already
+`logical`, but no role carries the REPLICATION attribute, so creating a
+slot fails until an administrator grants it. That single grant is the
+only difference from the other verified services.
+
+### Services not yet verified
+
+Do not describe a service as supported before its row is filled in. For
+the services still marked "Not yet run", the documentation's claim rests
+on the design requiring nothing they withhold, which is a reasoned
+expectation rather than a tested fact.
 
 ## Next Steps
 

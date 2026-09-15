@@ -97,7 +97,7 @@ Two counters, deliberately separate:
   It exists so the installer knows which migrations to run, and it increments
   whenever the on-disk shape changes.
 - **The product version** (`extension/volvra.control`) is a release decision.
-  It is **0.1.0**, because nothing has been released.
+  It is **1.0.0-beta1**, the first release.
 
 Coupling them was tried and was wrong: it made an internal implementation
 detail set the number users would see, so five refactors would have looked like

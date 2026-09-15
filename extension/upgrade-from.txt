@@ -11,5 +11,6 @@
 # extension-installed databases with no upgrade path, and ALTER EXTENSION
 # UPDATE refuses with "extension has no update path".
 #
-# Nothing is released yet, so this list is empty. Add 0.1.0 here when
-# default_version moves past it.
+# 1.0.0-beta1 is the first release, and nothing preceded it, so this list is
+# empty. Add 1.0.0-beta1 here when default_version moves past it, or every
+# database that installed the beta as an extension will be stranded.
